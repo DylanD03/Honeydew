@@ -1,0 +1,96 @@
+body {
+    background-color: #f0fff0; /* 浅绿色背景，与其他页面一致 */
+    font-family: 'Roboto', Arial, Helvetica, sans-serif; /* 统一字体 */
+    height: 100vh;
+    margin: 0;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    color: #333333; /* 全局文字颜色 */
+}
+
+/* 表单容器样式 */
+form {
+    background-color: #ffffff; /* 白色背景 */
+    padding: 50px;
+    border-radius: 10px;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1); /* 更柔和的阴影 */
+    width: 400px;
+    max-width: 100%;
+    text-align: center;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+}
+
+/* 标题样式 */
+h2 {
+    font-size: 32px;
+    margin-bottom: 20px;
+    color: #2E7D32; /* 深绿色标题，与其他页面一致 */
+}
+
+/* 标签样式 */
+label {
+    font-size: 14px;
+    color: #666666; /* 灰色标签文字 */
+    margin-bottom: 5px;
+    text-align: left;
+    width: 100%;
+}
+
+/* 输入框样式 */
+input[type="url"], input[type="text"], textarea, select {
+    width: 100%;
+    padding: 12px;
+    margin-bottom: 20px;
+    border: 1px solid #dddddd; /* 浅灰色边框 */
+    border-radius: 25px;
+    font-size: 16px;
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+    transition: border 0.3s ease, box-shadow 0.3s ease;
+}
+
+input[type="url"]:focus, input[type="text"]:focus, textarea:focus, select:focus {
+    outline: none;
+    border-color: #2E7D32; /* 聚焦时边框为深绿色 */
+    box-shadow: 0 4px 10px rgba(46, 125, 50, 0.3); /* 聚焦时添加阴影 */
+}
+
+/* 下拉框样式 */
+select {
+    background-color: #ffffff;
+    cursor: pointer;
+}
+
+/* 按钮样式 */
+button[type="submit"] {
+    background-color: #2E7D32; /* 深绿色背景 */
+    color: #ffffff; /* 白色文字 */
+    border: none;
+    padding: 15px;
+    border-radius: 25px;
+    cursor: pointer;
+    font-size: 18px;
+    width: 100%;
+    margin-top: 10px;
+    transition: background-color 0.3s ease, box-shadow 0.3s ease;
+}
+
+button[type="submit"]:hover {
+    background-color: #1B5E20; /* 悬停时深绿色背景 */
+    box-shadow: 0 4px 10px rgba(27, 94, 32, 0.3); /* 增加悬停阴影效果 */
+}
+
+button[type="submit"]:disabled {
+    background-color: #cccccc;
+    cursor: not-allowed;
+}
+
+/* 提示信息样式 */
+textarea {
+    font-size: 16px;
+    color: #333333;
+    resize: none; /* 禁止拖动改变大小 */
+}

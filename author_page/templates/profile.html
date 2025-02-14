@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <title>Profile</title>
+    {% load static %}
+    <link rel="stylesheet" href="{% static 'profile/css/profile.css' %}?v=1.0">
+</head>
+
+<body>
+    <div class="topbar">
+        <div class="menu" id="menu">
+            <a href="{% url 'stream-home' %}" class="menu-item" id="streamButton">Stream</a>
+            <a href="{% url 'post:index' %}" class="menu-item" id="postButton">Post</a>
+            <a href="{% url 'view_follow_requests' user.serial %}" class="menu-item" id="authButton">Friend Requests</a>
+            <a href="{% url 'view_authors' %}" class="menu-item" id="authButton">Authors</a>
+            <a href="{% url 'logoutRequest' %}" class="menu-item" id="logoutButton">Log Out</a>
+        </div>
+    </div>
+
+    <div class="profile">
+        <div class="header">
+            {% if profile_picture %}
+            <img src="{{ profile_picture }}" alt="Profile Picture" style="max-width: 200px;">
+            {% else %}
+            <img src="{% static 'profile/css/default-picture.jpg' %}" alt="Default Profile Picture"
+                style="max-width: 200px;">
+            {% endif %}
+            <h1>{{ author.display_name }}</h1>
+
+            {% if not is_own_profile %}
+            {% if is_following %}
+            <form action="{% url 'unfollow_author' author.fqid %}" method="post">
+                {% csrf_token %}
+                <button type="submit" class="follow-button">Unfollow</button>
+            </form>
+            {% elif requested %}
+            <p class="follow-text">Follow Request Sent</p>
+            {% else %}
+            <form action="{% url 'send_follow_request' author.fqid %}" method="post">
+                {% csrf_token %}
+                <button type="submit" class="follow-button">Follow</button>
+            </form>
+            {% endif %}
+            {% endif %}
+
+            <a href="{% url 'following' author.fqid %}" class="following_text">{{following_count}} Following</a>
+            <a href="{% url 'follower' author.fqid %}" class="follower_text">{{follower_count}} Followers</a>
+            <a href="{% url 'friend' author.fqid %}" class="friend_text">{{friend_count}} Friends</a>
+
+            {% if is_own_profile %}
+            <a href="{% url 'edit_profile' author.serial %}" class="edit_button">Edit Profile</a>
+            {% endif %}
+
+        </div>
+
+        <main>
+            <article>
+                {% if posts %}
+                <ul>
+                    {% for post in posts %}
+                    <li>
+                        <h3><a href="{% url 'view_post' post.id%}">{{ post.title }}</a></h3>
+                        <p>{{ post.description }}</p>
+                        {% if post.contentType == "text/markdown" %}
+                        <p class="content">{{ post.content }}</p>
+                        {% elif post.contentType == "image/png;base64" %}
+                        <img src="{{ post.content }}" alt="{{ post.description }}" style="max-width: 200px;">
+                        {% elif post.contentType == "image/jpeg;base64" %}
+                        <img src="{{ post.content }}" alt="{{ post.description }}" style="max-width: 200px;">
+                        {% elif post.contentType == "application/base64" %}
+                        <img src="{{ post.content }}" alt="{{ post.description }}" style="max-width: 200px;">
+                        {% else %}
+                        <p>{{ post.content }}</p>
+                        {% endif %}
+                    </li>
+                    {% endfor %}
+                </ul>
+                {% else %}
+                <p>No posts available.</p>
+                {% endif %}
+            </article>
+        </main>
+    </div>
+    <script src="{% static 'markdown-renderer.min.js' %}"></script>
+</body>
+
+</html>

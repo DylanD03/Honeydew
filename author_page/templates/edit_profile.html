@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <title>Edit Profile</title>
+    {% load static %}
+    <link rel="stylesheet" href="{% static 'profile/css/edit_profile.css' %}">
+</head>
+
+<body>
+    <div class="topbar">
+        <div class="menu" id="menu">
+            <a href="{% url 'stream-home' %}" class="menu-item" id="streamButton">Stream</a>
+            <a href="{% url 'post:index' %}" class="menu-item" id="postButton">Post</a>
+            <a href="{% url 'view_author_profile' user.serial %}" class="menu-item" id="profileButton">Profile</a>
+            <a href="{% url 'view_follow_requests' user.serial %}" class="menu-item" id="friendRequestButton">Friend Requests</a>
+            <a href="{% url 'view_authors' %}" class="menu-item" id="authButton">Authors</a>
+            <a href="{% url 'logoutRequest' %}" class="menu-item" id="logoutButton">Log Out</a>
+        </div>
+    </div>
+
+    <div class="profile">
+        <div class="header">
+            <h1>Edit Profile</h1>
+        </div>
+        <div class="edit">
+            <form method="POST" enctype="multipart/form-data">
+                {% csrf_token %}
+                
+                <label for="display_name">Display Name:</label>
+                <input type="text" id="display_name" name="display_name" value="{{ author.display_name }}" required>
+                
+                <div class="profile-picture">
+                    <label for="profile_picture">Profile Picture:</label>
+                    <input type="url" name="profile_picture" id="profile_picture" value="{{ author.profile_image }}" 
+                           placeholder="https://example.com/image.jpg">
+                </div>
+
+                <div class="github-url">
+                    <label for="github-url">(optional) Github URL:</label>
+                    <input type="text" id="github-url" name="github-url" id="github-url" value="{{ author.github }}">
+                </div>
+                
+                <button type="submit">Save Changes</button>
+            </form>
+        </div>
+    </div>
+</body>
+
+</html>

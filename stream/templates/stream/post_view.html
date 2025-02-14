@@ -1,0 +1,242 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="csrf-token" content="{{  csrf_token  }}">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Post View</title>
+    {% load static %}
+    {% load filters %}
+    <link rel="stylesheet" href="{% static 'stream/css/post_view.css' %}">
+    <script src="{% static 'js/fetch_functions.js' %}"></script>
+</head>
+
+<body>
+
+    <div class="topbar">
+        <div class="menu" id="menu">
+            <a href="{% url 'stream-home' %}" class="menu-item" id="streamButton">Stream</a>
+            <a href="{% url 'post:index' %}" class="menu-item" id="postButton">Post</a>
+            <a href="{% url 'view_author_profile' user.serial %}" class="menu-item" id="profileButton">Profile</a>
+            <a href="{% url 'view_follow_requests' user.serial %}" class="menu-item" id="authButton">Friend Requests</a>
+            <a href="{% url 'view_authors' %}" class="menu-item" id="authButton">Authors</a>
+            <a href="{% url 'logoutRequest' %}" class="menu-item" id="logoutButton">Log Out</a>
+        </div>
+    </div>
+
+    <h1 class="title">Post Details</h1>
+
+    <div class="post-box">
+        <div class="header">
+            <span class="author">
+                <a href="{% url 'view_author_profile' post.author.id %}">{{ post.author.displayName }}</a>
+            </span>
+            <span class="time-posted">{{ post.published }}</span>
+            {% if mine %}
+            <form method="POST" action="{% url 'post:edit_post' post.id %}" type="post">
+                {% csrf_token %}
+                <button class="edit_post" type="submit">Edit Post</button>
+            </form>
+
+            <form method="POST" action="{% url 'post:delete_post' post.id %}"
+                onsubmit="return confirm('Do you want to delete this post?')">
+                {% csrf_token %}
+                <button class="delete_post" type="submit">Delete</button>
+            </form>
+            {% endif %}
+        </div>
+
+        <div class="separator"></div>
+        <h3>{{ post.title }}</h3>
+        <p>{{ post.description }}</p>
+
+        <!-- Render markdown if it is a markdown post -->
+        {% if post.contentType == "text/markdown" %}
+        <p class="content">{{ post.content|safe }}</p>
+
+        {% elif post.contentType == "image/png;base64" %}
+        <img src="{{ post.content }}" alt="{{ post.description }}" style="max-width: 200px;">
+        {% elif post.contentType == "image/jpeg;base64" %}
+        <img src="{{ post.content }}" alt="{{ post.description }}" style="max-width: 200px;">
+        {% elif post.contentType == "application/base64" %}
+        <img src="{{ post.content }}" alt="{{ post.description }}" style="max-width: 200px;">
+
+        {% else %}
+        <div>{{ post.content|safe }}</div>
+        {% endif %}
+
+        <div class="footer">
+            <button class="button likeButton" id="likeButton{{ post.id|custom_slugify }}">
+                <ion-icon name="heart-outline" class="icon" aria-label="Like"></ion-icon> Like
+                <span class="interaction-count"
+                    id="likeCount{{ post.id|custom_slugify }}">{{post.likes|default:0}}</span>
+            </button>
+            <button class="button commentButton" id="commentButton" data-post-id="{{ post.id|custom_slugify }}">
+                <ion-icon name="chatbox-outline" class="icon" aria-label="Comment"></ion-icon> Comment
+                <span class="interaction-count">{{ comment_count }}</span>
+            </button>
+            <button class="button shareButton" id="shareButton" data-post-id="{{ post.id|custom_slugify }}">
+                <ion-icon name="share-social-outline" class="icon" aria-label="Share"></ion-icon> Share
+            </button>
+            <button class="button copyButton" id="copyButton{{ post.id|custom_slugify }}" onclick="copyLink()">
+                <ion-icon name="copy-outline" class="icon" aria-label="Copy"></ion-icon> Copy
+            </button>
+            {% if post.visibility == "FRIENDS" %}
+            <input type="hidden" value="{{ post.id }}" id="post_link" data-id="{{ post.id }}">
+            {% else %}
+            <p><input type="hidden" value="You may not copy link of Friends Only Posts" id="post_link"
+                    data-id="{{ post.id }}"></p>
+            {% endif %}
+            
+        </div>
+    </div>
+
+    <!-- Share Modal -->
+    <div id="shareModal" class="modal">
+        <div class="modal-content">
+            <!-- Button to close the modal -->
+            <span class="close" id="closeModal">&times;</span>
+            <h2>Share Post</h2>
+
+            <!-- Share form, using POST method to send data to the 'api:create_share' route -->
+            <form method="POST" action="{% url 'api:create_share' post.id %}" data-post-id="{{ post.id }}">
+                {% csrf_token %}
+                <input type="hidden" name="fqid" value="{{ user.fqid }}">
+                <!-- Text area for adding comments to the post -->
+                <textarea name="shareComment" id="shareComment"
+                    placeholder=" Add your thoughts to this post..."></textarea>
+
+                <button class="submit-button" id="submitShare">Share</button>
+            </form>
+        </div>
+    </div>
+
+
+    <!-- Comment Modal -->
+    <div id="commentModal" class="modal">
+        <div class="modal-content">
+            <!-- Button to close the modal -->
+            <span class="close" id="closeCommentModal">&times;</span>
+            <h2>Add a Comment</h2>
+
+            <!-- Comment form, using POST method to send data to the 'post:create_comment' route -->
+            <form method="POST" action="{% url 'post:create_comment' post.id %}">
+                {% csrf_token %}
+                <textarea name="content" id="commentContent" placeholder="Write your comment here..."
+                    required></textarea>
+                <label for="content_type">Type:</label>
+                <select id="commentContentType" name="content_type" required>
+                    {% for value, label in content_types %}
+                    <option value="{{value}}">{{label}}</option>
+                    {% endfor %}
+                </select>
+                <button class="submit-button" id="submitComment">Submit Comment</button>
+            </form>
+        </div>
+    </div>
+
+    <h3>Comments</h3>
+    {% for item in comments %}
+    <div class="comment_box">
+        <div class="header">
+            <span class="author">
+                <a href="{% url 'view_author_profile' item.author.id %}">{{ item.author.displayName }}</a>
+            </span>
+            <span class="time-posted">{{ item.published }}</span>
+        </div>
+
+        <!-- Render markdown if it is a markdown comment -->
+        {% if item.contentType == "text/markdown" %}
+        <p class="content">{{ item.comment }}</p>
+        {% else %}
+        <p>{{ item.comment }}</p>
+        {% endif %}
+    </div>
+    {% endfor %}
+
+    <script>
+
+        // Gets posts, which are passed from views.py
+        const post = {{ post | safe }} // Just a single post, to lazy to refactor
+
+        /* 
+          Add event listeners for each button in the post
+        */
+        async function attachPostEventListeners(post) {
+            /*
+                Create references to relavent componenets of a post. (UI and Post Model references)
+            */
+            postID = slugify(post.id)
+            /* Get reference to each button in the post */
+            const likeButton = document.querySelector(`#likeButton${postID}`);
+            console.log("LIKE BUTTON", likeButton)
+
+            /* Get Author of the Post */
+            const authorFQID = post.author.id
+            const authorFQIDList = post.author.id.split('/');
+            const authorSerial = post.author.id.split('/')[authorFQIDList.length - 1]; // Ensure this is the correct path to the FQID
+
+            /* Get Current user's serial */
+            const userFQID = "{{ user.fqid }}"
+            const userSerial = "{{ user.serial }}"
+
+            /* Get Current Post's serial */
+            const postFQID = post.id
+            const postFQIDList = post.id.split('/');
+            const postSerial = post.id.split('/')[postFQIDList.length - 1]; // Ensure this is the correct path to the FQID
+
+            /* 
+                Encode behaviour into each button in the post 
+                By using Click Event Listeners
+            */
+            if (likeButton) {
+                // Get like Count
+                var interactionCount = document.querySelector(`#likeCount${postID}`); // Select the count span
+                console.log("INTERACTION COUNT BUTTON", interactionCount)
+                display_likes(authorFQID, postFQID, interactionCount)
+
+                // Add Click listener for likes
+                likeButton.addEventListener('click', async () => {
+                    console.log("USER FQID: ", userFQID)
+                    console.log("AUTHOR FQID: ", authorFQID)
+                    console.log("POST FQID: ", postFQID)
+                    // Create Like Object
+                    let already_liked = await check_user_liked_post(userFQID, authorFQID, postFQID)
+                    if (already_liked) {
+                        console.log("Already Liked!")
+                        await delete_like(userFQID, authorFQID, postFQID, interactionCount);
+                        location.reload();
+                    } else {
+                        await like_post(userFQID, authorFQID, postFQID, interactionCount);
+                        location.reload();
+                    }
+
+                });
+            }
+
+        }
+
+        async function main() {
+            // Entry point for our stream code
+            await attachPostEventListeners(post);
+        }
+
+        // Entry point for our stream code
+        main();
+
+    </script>
+
+    <script src="{% static 'markdown-renderer.min.js' %}"></script>
+    <script src="{% static 'js/share.js' %}"></script>
+    <script src="{% static 'js/comment.js' %}"></script>
+    <script src="{% static 'js/fetch_functions.js' %}"></script>
+    <script src="{% static 'js/formatTime.js' %}"></script>
+
+    <!-- Import Ionic App Icons package -->
+    <script type="module" src="https://unpkg.com/ionicons@7.1.0/dist/ionicons/ionicons.esm.js"></script>
+    <script nomodule src="https://unpkg.com/ionicons@7.1.0/dist/ionicons/ionicons.js"></script>
+
+</body>
+
+</html>

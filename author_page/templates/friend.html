@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <title>Friends</title>
+    {% load static %}
+    <link rel="stylesheet" href="{% static 'profile/css/friend.css' %}">
+    <style>
+        .following_name {
+            color: red;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="topbar">
+        <div class="menu" id="menu">
+            <a href="{% url 'stream-home' %}" class="menu-item" id="streamButton">Stream</a>
+            <a href="{% url 'post:index' %}" class="menu-item" id="postButton">Post</a>
+            <a href="{% url 'view_author_profile' user.serial %}" class="menu-item" id="profileButton">Profile</a>
+            <a href="{% url 'view_follow_requests' user.serial %}" class="menu-item" id="authButton">Friend Requests</a>
+            <a href="{% url 'view_authors' %}" class="menu-item" id="authButton">Authors</a>
+            <a href="{% url 'logoutRequest' %}" class="menu-item" id="logoutButton">Log Out</a>
+        </div>
+    </div>
+
+    <div class="profile">
+        <div class="header">
+            <h1>Friends</h1>
+        </div>
+        <main>
+            <article>
+                {% if friend %}
+                    <ul>
+                        {% for author_friend in friend %}
+                        <li>
+                            <a href="{% url 'view_author_profile' author_friend.fqid %}" class="friend_text">{{ author_friend.display_name }}</a>
+                            
+                        </li>
+                        {% endfor %}
+                    </ul>
+                {% else %}
+                    <p>No friends!</p>
+                {% endif %}
+            </article>
+        </main>
+    </div>
+</body>
+
+</html>

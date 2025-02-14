@@ -1,0 +1,13 @@
+{% extends 'post/post_make.html' %}
+
+{% block content %}
+<label for="content">Content:</label>
+<textarea id="markdown-editor" rows="10" cols="50" placeholder="Write your content here" name="content"
+    required></textarea>
+{% endblock %}
+
+{% block script %}
+{% load static %}
+<script src="{% static 'markdown-editor.min.js' %}"></script>
+{% endblock %}
+

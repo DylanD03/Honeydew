@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        {% load static %}
+        <link rel="stylesheet" href="{% static 'post/css/post_make.css' %}">
+    </head>
+    <body>
+        
+        <form id="post-form" action="{% url 'post:create_post' %}" method="POST" enctype="multipart/form-data">
+            {% csrf_token %}
+            <h2>POST PAGE</h2>
+            <input type="hidden" name="content_type" value="{{ content_type }}">
+        
+            <label for="title">Title:</label>
+            <input type="text" id="title" name="title" required>
+        
+            <label for="description">Description:</label>
+            <input type="text" id="description" name="description" required>
+        
+            {% if content_type == "IMAGE" %}
+            <label for="post_image">Upload Image:</label>
+            <input type="file" name="post_image" id="post_image">
+            {% endif %}
+
+            {% if content_type == "text/markdown" %}
+            <label for="content">Content:</label>
+            <textarea id="markdown-editor" rows="10" cols="50" placeholder="Write your content here" name="content"
+            required></textarea>
+            {% endif %}
+
+            {% if content_type == "text/plain" %}
+            <label for="content">Content:</label>
+            <textarea id="content" rows="10" cols="50" placeholder="Write your content here!" name="content" required></textarea>
+            {% endif %}
+        
+            <label for="visibility">Visibility:</label>
+            <select id="visibility" name="visibility" required>
+                {% for value, label in post_types %}
+                <option value = "{{value}}">{{label}}</option>
+                {% endfor %}
+            </select>
+        
+            <button type="submit">Submit</button>
+        </form>
+
+        <script src="{% static 'markdown-editor.min.js' %}"></script>
+        <script>
+            console.log(user)
+        </script>
+        
+    </body>
+    
+</html>

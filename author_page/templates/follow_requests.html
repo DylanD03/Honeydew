@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Follow Requests</title>
+    {% load static %}
+    <link rel="stylesheet" href="{% static 'profile/css/follow_requests.css' %}">
+
+</head>
+<body>
+    <div class="topbar">
+        <div class="menu" id="menu">
+            <a href="{% url 'stream-home' %}" class="menu-item" id="streamButton">Stream</a>
+            <a href="{% url 'post:index' %}" class="menu-item" id="postButton">Post</a>
+            <a href="{% url 'view_author_profile' user.serial %}" class="menu-item" id="profileButton">Profile</a>
+            <a href="{% url 'view_authors' %}" class="menu-item" id="authButton">Authors</a>
+            <a href="{% url 'logoutRequest' %}" class="menu-item" id="logoutButton">Log Out</a>
+        </div>
+    </div>
+
+    <h1>Follow Requests for {{ author.displayName }}</h1>
+
+    <div class="list">
+        {% if follow_requests %} <!-- If user has follow requests-->
+            {% for request in follow_requests %} <!-- Loop through each Follow request-->
+
+                <div class="request-box">
+                    <!-- 左侧内容 -->
+                    <div class="request-content">
+                    <div class="profile-pic"></div>
+                    <a href="{% url 'view_author_profile' request.actor.id %}" class="profile-link">
+                        {{ request.actor.displayName }}
+                    </a>
+                    </div>
+                
+                    <!-- 右侧按钮 -->
+                    <div class="button-group">
+                    <form method="POST" action="{% url 'accept_follow_request' request.object.id request.actor.id %}">
+                        {% csrf_token %}
+                        <button type="submit" class="accept-btn">Accept</button>
+                    </form>
+                    <form method="POST" action="{% url 'deny_follow_request' request.object.id request.actor.id %}">
+                        {% csrf_token %}
+                        <button type="submit" class="deny-btn">Deny</button>
+                    </form>
+                    </div>
+                </div>
+
+            {% endfor %}
+        {% else %}
+            <p class="no-requests">No follow requests at the moment.</p>
+        {% endif %}
+    </div>
+</body>
+</html>

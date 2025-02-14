@@ -1,0 +1,224 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  {% load static %}
+  {% load filters %}
+  <meta charset="UTF-8">
+  <meta name="csrf-token" content="{{  csrf_token  }}">
+  <title>Social Media Posts Widget</title>
+  <link rel="stylesheet" href="{% static 'stream/css/stream.css' %}">
+  <script src="{% static 'js/fetch_functions.js' %}"></script>
+</head>
+
+<body>
+  <!-- Our Header/TopBar of the Stream Page. -->
+  <div class="topbar">
+    <div class="menu" id="menu">
+      <a href="{% url 'post:index' %}" class="menu-item" id="postButton">Post</a>
+      <a href="{% url 'view_author_profile' user.serial %}" class="menu-item" id="profileButton">Profile</a>
+      <a href="{% url 'view_follow_requests' user.serial %}" class="menu-item" id="authButton">Friend Requests</a>
+      <a href="{% url 'view_authors' %}" class="menu-item" id="authButton">Authors</a>
+      <a href="{% url 'logoutRequest' %}" class="menu-item" id="logoutButton">Log Out</a>
+    </div>
+  </div>
+
+  <h1 class="title">Posts Stream</h1>
+
+  <!-- 
+    Contains All Post Components in the User's Stream. 
+    The Post Components are created in the function createPostBox
+  -->
+  <div class="box" id="postContainer">
+    {% for post in posts %}
+    <div class="post-box">
+      <div class="header">
+        <span class="author">
+          <a href="{% url 'view_author_profile' post.author.id %}">{{ post.author.displayName }}</a>
+        </span>
+        <span class="time-posted">{{ post.published }}</span>
+      </div>
+      <div class="separator"></div>
+      <h3>
+        <a href="{% url 'view_post' post.id%}">{{ post.title }}</a>
+      </h3>
+      <p>{{ post.description }}</p>
+
+      {% if post.contentType == "text/markdown" %}
+      <p class="content">{{ post.content|safe }}</p>
+
+
+      {% elif post.contentType == "image/png;base64" %}
+      <img src="{{ post.content }}" alt="{{ post.description }}" style="max-width: 200px;">
+      {% elif post.contentType == "image/jpeg;base64" %}
+      <img src="{{ post.content }}" alt="{{ post.description }}" style="max-width: 200px;">
+      {% elif post.contentType == "application/base64" %}
+      <img src="{{ post.content }}" alt="{{ post.description }}" style="max-width: 200px;">
+
+      {% else %}
+      <p>{{ post.content|safe }}</p>
+      {% endif %}
+
+      <div class="footer">
+        <button class="button likeButton" id="likeButton{{ post.id|custom_slugify }}">
+          <ion-icon name="heart-outline" class="icon" aria-label="Like"></ion-icon> Like
+          <span class="interaction-count" id="likeCount{{ post.id|custom_slugify }}">{{post.likes|default:0}}</span>
+        </button>
+        <a href="{% url 'view_post' post.id %}">
+          <button class="button commentButton" id="commentButton{{ post.id|custom_slugify }}">
+            <ion-icon name="chatbox-outline" class="icon" aria-label="Comment"></ion-icon> Comment
+            <span class="interaction-count"
+              id="commentCount{{ post.id|custom_slugify }}">{{post.comments|default:0}}</span>
+          </button>
+        </a>
+
+        {% if post.visibility != "FRIENDS" %}
+        <input type="hidden" value="{{ post.id }}" id="post_link" data-id="{{ post.id }}">
+        {% else %}
+        <p><input type="hidden" value="You may not copy link of Friends Only Posts" id="post_link"
+            data-id="{{ post.id }}"></p>
+        {% endif %}
+        <button class="button copyButton" id="copyButton{{ post.id|custom_slugify }}" onclick="copyLink()">
+          <ion-icon name="copy-outline" class="icon" aria-label="Copy"></ion-icon> Copy
+        </button>
+      </div>
+    </div>
+
+    {% endfor %}
+  </div>
+  <div class="pagination"> <!-- Credit: https://stackoverflow.com/a/74619754 -->
+      <span>
+          <!-- Display Previous Page Options -->
+          {% if page_obj.has_previous %}
+              <!-- Reload the stream, but with new parameters (page)-->
+              <a href="?page=1">First</a>  
+              <a href="?page={{ page_obj.previous_page_number }}">Previous</a>   
+          {% endif %}
+          <!-- Display Page number -->
+          <span>
+              Page {{ page_obj.number }} of {{ page_obj.paginator.num_pages }}
+          </span>
+          <!-- Display Next Page Options -->
+          {% if page_obj.has_next %}
+              <!-- Reload the stream, but with new parameters (page)-->
+              <a href="?page={{ page_obj.next_page_number }}">Next</a>
+              <a href="?page={{ page_obj.paginator.num_pages }}">Last</a>
+          {% endif %}
+      </span>
+  </div>
+
+
+  <script>
+    async function display_comments(authorSerial, postSerial, interactionCount) {
+      try {
+        console.log("in display comments");
+        const response = await fetch(`/api/authors/${authorSerial}/posts/${postSerial}/all_comments`, {
+          method: 'GET',
+        });
+
+        if (!response.ok) {
+          throw new Error(`Error getting Post Comments! Status: ${response.status}`);
+        }
+
+        const data = await response.json(); // Parse the JSON from the response
+        interactionCount.textContent = data.count || 0; // Update interaction count
+        return data; // Return the data if needed elsewhere
+      } catch (error) {
+        console.error(error.message); // Log the error to the console
+      }
+    }
+
+    // Gets posts, which are passed from views.py
+    const posts = {{ posts | safe }};
+
+    /* 
+      Add event listeners for each individual post 
+      Every like/comment/share button is uniquely assigned it's own event listener,
+      by Mapping Each button to an new event listener  
+    */
+    async function attachPostEventListeners(posts) {
+      /* For each post */
+      posts.forEach(post => {
+        /*
+          Create references to relavent componenets of a post. (UI and Post Model references)
+        */
+        postID = slugify(post.id)
+        /* Get reference to each button in the post */
+        const likeButton = document.querySelector(`#likeButton${postID}`);
+        const commentButton = document.querySelector(`#commentButton${postID}`);
+        const commentModal = document.getElementById("commentModal");
+        const closeModal = document.getElementById('closeCommentModal');
+
+        /* Get Author of the Post */
+        const authorFQID = post.author.id
+        const authorFQIDList = post.author.id.split('/');
+        const authorSerial = post.author.id.split('/')[authorFQIDList.length - 1]; // Ensure this is the correct path to the FQID
+
+        /* Get Current user's serial */
+        const userFQID = "{{ user.fqid }}"
+        const userSerial = "{{ user.serial }}"
+
+        /* Get Current Post's serial */
+        const postFQID = post.id
+        const postFQIDList = post.id.split('/');
+        const postSerial = post.id.split('/')[postFQIDList.length - 1]; // Ensure this is the correct path to the FQID
+
+        /* 
+          Encode behaviour into each button in the post 
+          By using Click Event Listeners
+        */
+        if (likeButton) {
+          // Get like Count
+          var interactionCount = document.querySelector(`#likeCount${postID}`); // Select the count span
+
+          display_likes(authorFQID, postFQID, interactionCount)
+
+          // Add Click listener for likes
+          likeButton.addEventListener('click', async () => {
+            console.log("LISTENER")
+            console.log("USER FQID: ", userFQID)
+            console.log("AUTHOR FQID: ", authorFQID)
+            console.log("POST FQID: ", postFQID)
+            // Create Like Object
+            let already_liked = await check_user_liked_post(userFQID, authorFQID, postFQID)
+            if (already_liked) {
+              console.log("Already Liked!")
+              await delete_like(userFQID, authorFQID, postFQID, interactionCount);
+            } else {
+              console.log("Liking Post!")
+              await like_post(userFQID, authorFQID, postFQID, interactionCount);
+            }
+
+          });
+        }
+
+        if (commentButton) {
+          var interCount = document.querySelector(`#commentCount${postID}`); // Select the count span
+
+          display_comments(authorSerial, postSerial, interCount)
+        }
+
+      });
+    }
+
+    async function main() {
+      // Entry point for our stream code
+      await attachPostEventListeners(posts);
+      await fetch_activity("{{user.serial}}", "{{user.github}}");
+    }
+
+    // Entry point for our stream code
+    main();
+
+  </script>
+
+  <!-- Render Markdown Content -->
+  <script src="{% static 'markdown-renderer.min.js' %}"></script>
+
+  <!-- Import Ionic App Icons package https://ionic.io/ionicons -->
+  <script type="module" src="https://unpkg.com/ionicons@7.1.0/dist/ionicons/ionicons.esm.js"></script>
+  <script nomodule src="https://unpkg.com/ionicons@7.1.0/dist/ionicons/ionicons.js"></script>
+  <script src="{% static 'js/formatTime.js' %}"></script>
+</body>
+
+</html>

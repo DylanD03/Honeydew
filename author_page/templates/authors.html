@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <title>Authors</title>
+    {% load static %}
+    <link rel="stylesheet" href="{% static 'profile/css/authors.css' %}">
+</head>
+
+<body>
+    <div class="topbar">
+        <div class="menu" id="menu">
+            <a href="{% url 'stream-home' %}" class="menu-item" id="streamButton">Stream</a>
+            <a href="{% url 'post:index' %}" class="menu-item" id="postButton">Post</a>
+            <a href="{% url 'view_author_profile' user.serial %}" class="menu-item" id="profileButton">Profile</a>
+            <a href="{% url 'view_follow_requests' user.serial %}" class="menu-item" id="authButton">Friend Requests</a>
+            <a href="{% url 'logoutRequest' %}" class="menu-item" id="logoutButton">Log Out</a>
+        </div>
+    </div>
+
+    <div class="search-box">
+        <input type="text" id="authorSearch" class="search-input" placeholder="Search authors...">
+    </div>
+
+    <div class="non_following">
+        <div class="header">
+            <h1>Authors</h1>
+        </div>
+        <main>
+            <article>
+                {% if other_authors %}
+                <ul id="authorList">
+                    {% for other_author in other_authors %}
+                    <li>
+                        <div class="auth_box">
+                            <a href="{% url 'view_author_profile' other_author.fqid %}" class="following_text">
+                                {{ other_author.display_name }}
+                            </a>
+                            <div class="badge-wrapper">
+                                <div class="badge" style="background-color: {{other_author.color}};">
+                                    <span class="text" style="color: #ffffff">
+                                        {{other_author.letter}}
+                                    </span>
+                                </div>
+                            </div>
+                        </div>
+                    </li>
+                    {% endfor %}
+                </ul>
+                {% else %}
+                <p>There are no more authors to follow!</p>
+                {% endif %}
+            </article>
+        </main>
+    </div>
+
+    <div class="following">
+        <div class="header">
+            <h1>Following</h1>
+        </div>
+        <main>
+            <article>
+                {% if following_authors %}
+                <ul>
+                    {% for followed_author in following_authors %}
+                    <li>
+                        <div class="auth_box">
+                            <a href="{% url 'view_author_profile' followed_author.fqid %}" class="following_text">
+                                {{followed_author.display_name}}</a>
+                            <div class="badge" style="background-color: {{followed_author.color}};">
+                                <span class="text" style="color: #ffffff">
+                                    {{followed_author.letter}}
+                                </span>
+                            </div>
+                        </div>
+                    </li>
+                    {% endfor %}
+                </ul>
+                {% else %}
+                <p>Not following anyone!</p>
+                {% endif %}
+            </article>
+        </main>
+    </div>
+
+    <script src="{% static 'profile/js/author.js' %}"></script>
+</body>
+
+</html>

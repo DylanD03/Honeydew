@@ -1,0 +1,26 @@
+<!DOCTYPE html>
+<hmtl>
+
+    <head>
+        {% load static %}
+        <link rel="stylesheet" href="{% static 'post/css/post_type.css' %}">
+    </head>
+
+    <body>
+        <h1>What kind of post do you want to make?</h1>
+        <form id="type-form" action="{% url 'post:get_post_type' %}" method="post">
+            
+            {% csrf_token %}
+
+            <select id="content_type" name="content_type" required>
+                {% for value, label in content_types %}
+                <option value="{{value}}">{{label}}</option>
+                {% endfor %}
+            </select>
+
+            <button type="submit">Next</button>
+        </form>
+
+        
+    </body>
+</hmtl>
