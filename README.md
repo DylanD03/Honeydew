@@ -89,11 +89,11 @@ Make a distributed social network!
 
 The authors claiming copyright, if they wish to be known, can list their names here...
 
+* Dylan Du - DylanD03
 * Alex Huo - MdzzLO
 * Ben Gao
 * Brett Liu - Polaris Starnor
 * Brianna Stals - stalsb
-* Dylan Du - DylanD03
 * Shiv Chopra - Shiv Chopra
 
 
